@@ -36,7 +36,12 @@ param(
     [string]$OutputPath,
 
     # Folder of an earlier run; fails if any sheet fingerprint differs
-    [string]$CompareTo
+    [string]$CompareTo,
+
+    # Run with live Azure calls allowed. By default the jobs get an empty profile
+    # folder, so modules that call Azure (e.g. StorageAccounts) fail fast instead of
+    # making real requests with a saved login and skewing the timings.
+    [switch]$AllowAzureCalls
 )
 
 $ErrorActionPreference = 'Stop'
@@ -67,6 +72,15 @@ $SamplerJob = Start-ThreadJob -ArgumentList $Sampler, $PID -ScriptBlock {
         if ($Sum -gt $State.JobsPeak) { $State.JobsPeak = $Sum }
         Start-Sleep -Milliseconds 500
     }
+}
+
+$SavedProfile = @{ USERPROFILE = $env:USERPROFILE; HOME = $env:HOME }
+if (-not $AllowAzureCalls) {
+    # Job processes inherit these and look for the Az context under them
+    $EmptyProfile = Join-Path $OutputPath 'EmptyProfile'
+    $null = New-Item -ItemType Directory -Force -Path $EmptyProfile
+    $env:USERPROFILE = $EmptyProfile
+    $env:HOME = $EmptyProfile
 }
 
 $Timer = [System.Diagnostics.Stopwatch]::StartNew()
@@ -112,6 +126,9 @@ $Phase = & $Module {
 
     [pscustomobject]@{ Processing = $ProcessingSeconds; Report = $ReportSeconds; JobTimes = $JobTimes }
 } $Resources $Subscriptions $OutputPath ([bool]$IncludeTags) $File $ReportCache ([bool]$SkipReport)
+
+$env:USERPROFILE = $SavedProfile.USERPROFILE
+$env:HOME = $SavedProfile.HOME
 
 $Sampler.Run = $false
 $SamplerJob | Wait-Job | Remove-Job
