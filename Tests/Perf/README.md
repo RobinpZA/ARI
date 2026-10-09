@@ -29,3 +29,19 @@ Reports processing time, report time, time per category job, peak memory (this p
 Throws if any sheet differs from the earlier run.
 
 The extraction phase is not covered because it needs a tenant. Use the phase times `Invoke-ARI` prints at the end of a live run.
+
+## One module, old vs new
+
+```powershell
+./Tests/Perf/Measure-ARIModule.ps1 -Module Compute/VirtualMachine.ps1 -OldRef upstream/main -Sizes 10000, 50000
+```
+
+Runs a single inventory module in Processing mode from a git ref and from the working tree, against the same fixture, and checks every output row is identical. Faster and less noisy than a full run when only one module changed. Adds placement groups, retirements and a VM with three data disks so those paths run too.
+
+## Live memory
+
+```powershell
+./Tests/Perf/Measure-ARILiveMemory.ps1 -TenantId <tenant-guid> -Side new
+```
+
+Needs an Az login and makes read-only calls. Imports ARI through the `.psd1`, runs extraction and resource processing, and reports the peak memory of the main process and of main plus job processes (what Task Manager groups under `pwsh`), with the step running at each peak. Run it in a fresh `pwsh` each time: the process peak covers the whole life of the process.
