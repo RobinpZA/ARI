@@ -11,6 +11,7 @@ retirements and a VM with three data disks to the fixture so those paths run too
 #>
 param([string]$Module = 'Compute/VirtualMachine.ps1', [string]$OldRef = 'upstream/main', [int[]]$Sizes = @(10000, 50000), [switch]$InTag)
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)  # else a BOM in git output becomes junk and the old code fails to parse
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..' '..')).Path
 $Path = "Modules/Public/InventoryModules/$Module"
 $OldCode = ((git -C $Repo show "${OldRef}:$Path") -join "`n").TrimStart([char]0xFEFF)

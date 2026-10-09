@@ -45,3 +45,11 @@ Runs a single inventory module in Processing mode from a git ref and from the wo
 ```
 
 Needs an Az login and makes read-only calls. Imports ARI through the `.psd1`, runs extraction and resource processing, and reports the peak memory of the main process and of main plus job processes (what Task Manager groups under `pwsh`), with the step running at each peak. Run it in a fresh `pwsh` each time: the process peak covers the whole life of the process.
+
+## All changed modules, old vs new
+
+```powershell
+./Tests/Perf/Compare-ARIModules.ps1 -OldRef upstream/main
+```
+
+Runs every inventory module changed since `-OldRef` from that ref and from the working tree, with synthetic retirements added, and checks the rows are identical. Exits 1 if any module differs. `-Repo` points it at another checkout (for example a rebase worktree).
