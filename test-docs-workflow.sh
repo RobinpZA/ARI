@@ -24,6 +24,17 @@ fi
 echo "Dependencies installation completed"
 echo "========================================================"
 
+# Verify the deployment token can push the generated site
+python - <<'PY' || exit 1
+import yaml
+
+with open(".github/workflows/documentation.yml") as workflow:
+    job = yaml.safe_load(workflow)["jobs"]["build-and-deploy"]
+assert job["permissions"]["contents"] == "write", "Deployment requires contents: write"
+print("Deployment permission verified")
+PY
+echo "========================================================"
+
 # Step 3: Build the site
 echo "Step 3: Building MkDocs site..."
 mkdocs build
